@@ -5,6 +5,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+typedef struct{
+    int data;
+} node_t;
+
 typedef struct QueueNode_t{
     int data;  // this can be replaced by data structure
     struct QueueNode_t* nxt_link;

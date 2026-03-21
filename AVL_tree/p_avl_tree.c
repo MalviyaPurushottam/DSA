@@ -74,11 +74,11 @@ void AVLTree_insertNode(avl_tree* Tree, void* new_node, int (*compare)(void*a, v
     while (1) {
         // check for imbalance
         int is_imbalance = find_imbalance(temp_node);
-        if(is_imbalance){
+        if(is_imbalance == NOT_BALANCED){
             balance(temp_node);
             return;
         }
-        else {
+        else if(is_imbalance == BALANCED){
             update_height(temp_node);
             temp_node = temp_node->parent;
             if(temp_node == NULL){
@@ -123,21 +123,21 @@ void AVLTree_display(avl_tree* tree, void (*print_node)(void*)){
 static int find_imbalance(avl_node* node){
     if(node->left == NULL){
         if(node->right->height > 1){
-            return 1;
+            return NOT_BALANCED;
         }
     }
-    if (node->right == NULL) {
+    else if (node->right == NULL) {
         if(node->left->height > 1){
-            return 1;
+            return NOT_BALANCED;
         }
     }
-    
-    unsigned int diff = node->left->height - node->right->height;
-    if((diff <= -2) || (diff >= 2)){
-        return 1;
+    else {
+        unsigned int diff = node->left->height - node->right->height;
+        if((diff <= -2) || (diff >= 2)){
+            return NOT_BALANCED;
+        }
     }
-    
-    return 0;
+    return BALANCED;
 }
 
 static void update_height(avl_node* node){
@@ -186,39 +186,46 @@ static int go_left(avl_node* node){
 
 static void avl_r_left_left(avl_node* node){
     /*
-                z : node
-               / \
-              y  t4
-             / \  
-            x  t3
-           / \
-          t1  t2        
+                z : node                           y : node                                                           
+               / \                                / \                         
+              y  t4                              x    z                        
+             / \                                / \   / \                      
+            x  t3                              t1 t2 t3 t4                            
+           / \                                                          
+          t1  t2                                                                    
     */
-    // swapping the node data of y and z as the parent linkage should not be disturbed
-    void* temp;
-    temp = node->nptr;
-    node->nptr = node->left->nptr;
-    node->left->nptr = temp;
-    
-    // referencing nodes
+
+    avl_node* z = node;
+    avl_node* y = node->left;
     avl_node* x = node->left->left;
-    avl_node* y = node->left;  // holds value of z
-    // node hold value of y  
 
-    node->left = x;
-    x->parent = node;
-
-    // in y changing sibling
-    y->left = y->right;
-
-    if(node->right != NULL){
-        y->right = node->right;
-        node->right->parent = y;
+    // find if parent is present or not
+    if(node->parent != NULL){
+        // get which child node is
+        if(node->parent->right == node){
+            y->parent = node->parent;
+            y->parent->right = y;
+            
+        }
+        else if(node->parent->left == node){
+            y->parent = node->parent;
+            y->parent->left = y;
+        }
     }
 
-    node->right = y;
-    y->parent = node;
+    // make t3 child of z freeing y
+    z->left = y->right;
+    y->right->parent = z;
 
+    // make x and z child of y
+    y->right = z;
+    z->parent = y;
+
+    y->left = x;
+    x->parent = z;
+
+    // make node as y
+    node = y;
     node->left->height = node->height - 1;
     node->right->height = node->height - 1;
 
@@ -235,39 +242,45 @@ static void avl_r_left_right(avl_node* node){
                / \               
               t2  t3                 
     */
-    void* temp = node->nptr;
-    node->nptr = node->left->right->nptr;
-    node->left->right->nptr = temp;
-
+    avl_node* z = node;
     avl_node* y = node->left;
-    avl_node* x = node->left->right;  // this contains value of z 
+    avl_node* x = node->left->right;
 
-    // making t2 belong to y
-    if(x->left != NULL){
-        y->right = x->left;
-        x->left->parent = y;
-    }
-
-    // making t4 bleong to x
-    if(node->right != NULL){
-        x->left = node->right;
-        node->right->parent = x;
+    // find if parent is present or not
+    if(node->parent != NULL){
+        // get which child node is
+        if(node->parent->right == node){
+            x->parent = node->parent;
+            x->parent->right = x;
+            
+        }
+        else if(node->parent->left == node){
+            x->parent = node->parent;
+            x->parent->left = x;
+        }
     }
     
-    // making x right of node
-    node->right = x;
-    x->parent = node;
+    // make t3 child of z freeing x
+    z->left = x->right;
+    x->right->parent = z;
 
-    // swapping the chlidren of x
-    temp = x->right;
-    x->right = x->left;
-    x->left = x->right;
+    // make t2 child of y freeing x
+    y->right = x->left;
+    x->left->parent = y;
 
+    // make y and z child of x
+    x->right = z;
+    z->parent = x;
+
+    x->left = y;
+    y->parent = x;
+
+    // make node as x
+    node = x;
     node->left->height = node->height - 1;
     node->right->height = node->height - 1;
 
     return;
-
 }
 
 static void avl_r_right_left(avl_node* node){
@@ -280,39 +293,45 @@ static void avl_r_right_left(avl_node* node){
                / \               
               t2  t3                 
     */
-    void* temp = node->nptr;
-    node->nptr = node->right->left->nptr;
-    node->right->left->nptr = temp;
-
+    avl_node* z = node;
     avl_node* y = node->right;
-    avl_node* x = node->right->left;  // this contains value of z 
+    avl_node* x = node->right->left;
 
-    // making t3 belong to y
-    if(x->right != NULL){
-        y->left = x->right;
-        x->right->parent = y;
+    // find if parent is present or not
+    if(node->parent != NULL){
+        // get which child node is
+        if(node->parent->right == node){
+            x->parent = node->parent;
+            x->parent->right = x;
+            
+        }
+        else if(node->parent->left == node){
+            x->parent = node->parent;
+            x->parent->left = x;
+        }
     }
+    
+    // make t3 child of y freeing x
+    y->left = x->right;
+    x->right->parent = y;
 
-    // making t1 bleong to x
-    if(node->left != NULL){
-        x->right = node->left;
-        node->left->parent = x;
-    }
+    // make t2 child of z freeing x
+    z->right = x->left;
+    x->left->parent = z;
 
-    // making x right of node
-    node->left = x;
-    x->parent = node;
+    // make y and z child of x
+    x->right = z;
+    z->parent = x;
 
-    // swapping the chlidren of x
-    temp = x->right;
-    x->right = x->left;
-    x->left = x->right;
+    x->left = y;
+    y->parent = x;
 
+    // make node as x
+    node = x;
     node->left->height = node->height - 1;
     node->right->height = node->height - 1;
 
     return;
-
 }
 
 static void avl_r_right_right(avl_node* node){    
@@ -325,33 +344,39 @@ static void avl_r_right_right(avl_node* node){
                   / \
                  t3  t4        
     */
-    // swapping the node data of y and z as the parent linkage should not be disturbed
-    void* temp;
-    temp = node->nptr;
-    node->nptr = node->right->nptr;
-    node->right->nptr = temp;
-    
-    // referencing nodes
+
+    avl_node* z = node;
+    avl_node* y = node->right;
     avl_node* x = node->right->right;
-    avl_node* y = node->right;  // holds value of z
-    // node hold value of y  
 
-    node->right = x;
-    x->parent = node;
-
-    // in y changing sibling
-    y->right = y->left;
-
-    if(node->left != NULL){
-        y->left = node->left;
-        node->left->parent = y;
+    // find if parent is present or not
+    if(node->parent != NULL){
+        // get which child node is
+        if(node->parent->right == node){
+            y->parent = node->parent;
+            y->parent->right = y;
+            
+        }
+        else if(node->parent->left == node){
+            y->parent = node->parent;
+            y->parent->left = y;
+        }
     }
+    
+    // make t2 child of z freeing y
+    z->right = y->left;
+    y->left->parent = z;
 
-    node->left = y;
-    y->parent = node;
+    // make x and z child of y
+    y->left = z;
+    z->parent = y;
 
+    y->right = x;
+    x->parent = z;
+
+    // make node as y
+    node = y;
     node->left->height = node->height - 1;
     node->right->height = node->height - 1;
-
     return;
 }

@@ -10,6 +10,12 @@
 #define GO_LEFT (1)
 #define GO_RIGHT (2)
 
+#define BALANCED (1)
+#define NOT_BALANCED (2)
+
+#define LEFT_CHILD (1)
+#define RIGHT_CHILD (2)
+
 #define DO_DEBUG
 
 #ifdef DO_DEBUG

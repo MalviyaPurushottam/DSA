@@ -48,14 +48,4 @@ void AVLTree_searchNode(avl_tree* Tree, void* old_node, int (*compare)(void*a, v
 
 void AVLTree_display(avl_tree* tree, void (*print_node)(void*));
 
-static int find_imbalance(avl_node* node);
-static void balance(avl_node* node);
-static void update_height(avl_node* node);
-static int go_left(avl_node* node);
-
-static void avl_r_left_left(avl_node* node);
-static void avl_r_left_right(avl_node* node);
-static void avl_r_right_left(avl_node* node);
-static void avl_r_right_right(avl_node* node);
-
 #endif // _P_AVL_TREE_H_

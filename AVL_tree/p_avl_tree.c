@@ -75,6 +75,7 @@ void AVLTree_insertNode(avl_tree* Tree, void* new_node, int (*compare)(void*a, v
         // check for imbalance
         int is_imbalance = find_imbalance(temp_node);
         if(is_imbalance == NOT_BALANCED){
+            DEBUG_PRINT("%p \n", node);
             balance(temp_node);
             return;
         }
@@ -159,12 +160,12 @@ static void update_height(avl_node* node){
 }
 
 static void balance(avl_node* node){
-    DEBUG_PRINT("Balance called ... \n");
     // there are 4 types of rotation
     if(go_left(node) == GO_LEFT){
         rotate_node[0][(go_left(node->left))-1](node);
     }
     else{
+        DEBUG_PRINT("%p ", node);
         rotate_node[1][(go_left(node->right))-1](node);
     }
     return;
@@ -344,39 +345,50 @@ static void avl_r_right_right(avl_node* node){
                   / \
                  t3  t4        
     */
+    DEBUG_PRINT("doing the balancing ... \n");
+    DEBUG_PRINT("%p", node);
+DEBUG_PRINT("0 ");
 
     avl_node* z = node;
     avl_node* y = node->right;
     avl_node* x = node->right->right;
-
+DEBUG_PRINT("1 ");
     // find if parent is present or not
     if(node->parent != NULL){
         // get which child node is
         if(node->parent->right == node){
+DEBUG_PRINT("1.1 ");
             y->parent = node->parent;
             y->parent->right = y;
             
         }
         else if(node->parent->left == node){
+DEBUG_PRINT("1.2 ");
             y->parent = node->parent;
             y->parent->left = y;
         }
     }
+DEBUG_PRINT("2 ");
     
     // make t2 child of z freeing y
     z->right = y->left;
     y->left->parent = z;
+DEBUG_PRINT("3 ");
 
     // make x and z child of y
     y->left = z;
     z->parent = y;
+DEBUG_PRINT("4 ");
 
     y->right = x;
     x->parent = z;
+DEBUG_PRINT("5 ");
 
     // make node as y
     node = y;
+DEBUG_PRINT("6 ");
     node->left->height = node->height - 1;
     node->right->height = node->height - 1;
+DEBUG_PRINT("7 ");
     return;
 }
